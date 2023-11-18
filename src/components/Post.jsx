@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
 import { format, formatDistanceToNow } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR'
@@ -10,9 +9,7 @@ import { useState } from 'react';
 
 function Post({author, publishedAt,  content }) {
   const [newCommentText, setNewCommentText] = useState('')
-  const [comments, setComments] = useState([
-      "Muito bom Devon, parabéns!! 👏👏",
-  ])
+  const [comments, setComments] = useState([])
 
   const publishedDateFormatter = format(publishedAt, "d 'de' LLLL 'as' HH:mm'h'", { locale: ptBR })
   const publishedDateRelativeToNow = formatDistanceToNow(publishedAt, {
@@ -28,8 +25,20 @@ function Post({author, publishedAt,  content }) {
   }
 
   function newCommentChange(event) {
+    event.target.setCustomValidity('')
     setNewCommentText(event.target.value)
   }
+
+  function deleteComment(commentToDelete) {
+    const commentsWithoutDeletedOne = comments.filter(comment => comment !== commentToDelete)
+    setComments(commentsWithoutDeletedOne);
+  }
+
+  function handleNewCommentInvalid(event) {
+    event.target.setCustomValidity('Ésse campo eh obrigatorio')
+  }
+
+  const isNewCommentEmpty = newCommentText.length === 0
 
   return (
     <article className={styles.post}>
@@ -49,9 +58,9 @@ function Post({author, publishedAt,  content }) {
         {
           content.map((item) =>{
             if(item.type === 'paragraph') {
-              return <p>{item.content}</p>
+              return <p key={item.content}>{item.content}</p>
             } else if(item.type === 'link') {
-              return <p><a href='#'>{item.content}</a></p>
+              return <p key={item.content}><a href='#'>{item.content}</a></p>
             }
           })
         }
@@ -65,16 +74,27 @@ function Post({author, publishedAt,  content }) {
           placeholder="Deixe seu comentario"
           onChange={newCommentChange}
           value={newCommentText}
+          onInvalid={handleNewCommentInvalid}
+          required
         />
         <footer>
-          <button onClick={handleCreateNewComment} >Publicar</button>
+          <button
+            disabled={isNewCommentEmpty}
+            onClick={handleCreateNewComment}
+          >
+            Publicar
+          </button>
         </footer>
       </form>
 
       <div className={styles.commentList}>
         {
           comments.map((comment) => (
-            <Comment content={comment} />
+            <Comment
+              key={comment}
+              content={comment}
+              onDeleteComment={deleteComment}
+            />
           ))
         }
       </div>
